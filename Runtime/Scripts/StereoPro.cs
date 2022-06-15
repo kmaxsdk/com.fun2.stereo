@@ -16,21 +16,34 @@ namespace Kmax
         void Start()
         {
             _camera = GetComponent<Camera>();
+            _camera.stereoTargetEye = StereoTargetEyeMask.Both;
             originalProjection = _camera.projectionMatrix;
             ResetProjection();
-            targetScreen = VisualScreen.Main;
-            targetScreen.ScaleFactor = viewScale;
-            targetScreen.Position = screenPos;
             if (convergenceMode == FocusMode.Once) Converge();
         }
         Matrix4x4 originalProjection;
         [SerializeField, Header("屏幕")]
-        float screenInch = 24;
-        [SerializeField] Vector3 screenPos;
-        [SerializeField] float viewScale = 1f;
         private VisualScreen targetScreen;
         [SerializeField] FocusMode convergenceMode;
         float left, right, bottom, top, nearClip, farClip;
+
+        void OnValidate()
+        {
+            if (targetScreen.ScreenSize <= 0)
+            {
+                targetScreen.ScreenSize = 24;
+            }
+            if (targetScreen.ScaleFactor <= 0)
+            {
+                targetScreen.ScaleFactor = 1;
+            }
+            if (targetScreen.Ratio.x <= 0 || targetScreen.Ratio.y <= 0)
+            {
+                targetScreen.Ratio = new Vector2Int(16, 9);
+            }
+            targetScreen.CalculateRect();
+        }
+
         void Update()
         {
             if (convergenceMode == FocusMode.Always) Converge();
@@ -38,7 +51,7 @@ namespace Kmax
 
         void OnDrawGizmos()
         {
-            VisualScreen.Main.DrawGizmos();
+            targetScreen.DrawGizmos();
         }
 
         /// <summary>
@@ -61,7 +74,6 @@ namespace Kmax
 
         public void SetFrustum(Transform _cam, StereoTargetEyeMask eyeMask)
         {
-            // _cam.projectionMatrix = TrackScreen(_cam);
             switch (eyeMask)
             {
                 case StereoTargetEyeMask.Both:

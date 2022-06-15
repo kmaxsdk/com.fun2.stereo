@@ -4,16 +4,18 @@ using UnityEngine;
 
 namespace Kmax
 {
-
+    [System.Serializable]
     public class VisualScreen
     {
-        private float screenSize = 24;
-        private float scaleFactor = 1f;
+        [SerializeField] private float screenSize = 24;
+        [SerializeField] private float scaleFactor = 1f;
+        [SerializeField] private Vector2Int ratio = new Vector2Int(16, 9);
         const float INCH2M = 0.0254f;//英寸转米
         float left, right, bottom, top;
         public Vector3 Position;
         public float Width => width;
         public float Height => height;
+
         public Vector3 LeftTop => new Vector3(left, top, 0) + Position;
         public Vector3 RightTop => new Vector3(right, top, 0) + Position;
         public Vector3 LeftBottom => new Vector3(left, bottom, 0) + Position;
@@ -22,33 +24,43 @@ namespace Kmax
         {
             get
             {
-                if (screens == null || screens.Count == 0)
+                if (current == null)
                 {
-                    screens = new List<VisualScreen>();
-                    screens.Add(new VisualScreen(24, 1));
+                    current = new VisualScreen(24, 1);
                 }
-                return screens[0];
+                return current;
             }
         }
 
-        public float ScreenSize { get => screenSize; set { screenSize = value; CalculateScreenRect();} }
-        public float ScaleFactor { get => scaleFactor; set { scaleFactor = value; CalculateScreenRect(); } }
-        private static List<VisualScreen> screens;
+        public float ScreenSize { get => screenSize; set { screenSize = value; CalculateRect(); } }
+        public float ScaleFactor { get => scaleFactor; set { scaleFactor = value; CalculateRect(); } }
 
-        int widthRatio, heightRatio;
+        public Vector2Int Ratio { get => ratio; set { ratio = value; CalculateRect(); } }
+
+        private static VisualScreen current;
+
         float width, height;
+        public VisualScreen()
+        {
+            CalculateRect();
+            current = this;
+        }
+
         VisualScreen(float size = 24, float factor = 1f, int wRatio = 16, int hRatio = 9)
         {
             screenSize = size;
             scaleFactor = factor;
-            widthRatio = wRatio;
-            heightRatio = hRatio;
-            CalculateScreenRect();
+            ratio.x = wRatio;
+            ratio.y = hRatio;
+            CalculateRect();
+            current = this;
         }
 
-        private void CalculateScreenRect()
+        internal void CalculateRect()
         {
             float size = screenSize * INCH2M;
+            var widthRatio = ratio.x;
+            var heightRatio = ratio.y;
             float sizeRatio = Mathf.Sqrt(widthRatio * widthRatio + heightRatio * heightRatio);
             width = size * widthRatio / sizeRatio * scaleFactor;
             height = size * heightRatio / sizeRatio * scaleFactor;
