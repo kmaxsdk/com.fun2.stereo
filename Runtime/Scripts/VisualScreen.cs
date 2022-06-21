@@ -2,10 +2,10 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace Kmax
+namespace Fun2
 {
-    [System.Serializable]
-    public class VisualScreen
+    [CreateAssetMenu(menuName = "Fun2/VisualScreen")]
+    public class VisualScreen : ScriptableObject
     {
         [SerializeField] private float screenSize = 24;
         [SerializeField] private float scaleFactor = 1f;
@@ -54,6 +54,28 @@ namespace Kmax
             ratio.y = hRatio;
             CalculateRect();
             current = this;
+        }
+
+        void OnEnable()
+        {
+            CalculateRect();
+        }
+
+        void OnValidate()
+        {
+            if (ScreenSize <= 0)
+            {
+                ScreenSize = 24;
+            }
+            if (ScaleFactor <= 0)
+            {
+                ScaleFactor = 1;
+            }
+            if (Ratio.x <= 0 || Ratio.y <= 0)
+            {
+                Ratio = new Vector2Int(16, 9);
+            }
+            CalculateRect();
         }
 
         internal void CalculateRect()

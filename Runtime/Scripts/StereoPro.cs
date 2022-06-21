@@ -2,9 +2,9 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace Kmax
+namespace Fun2
 {
-    internal enum FocusMode { Nerver, Once, Always }
+    internal enum ConvergeMode { Nerver, Once, Always }
     [RequireComponent(typeof(Camera))]
     public class StereoPro : MonoBehaviour
     {
@@ -19,39 +19,27 @@ namespace Kmax
             _camera.stereoTargetEye = StereoTargetEyeMask.Both;
             originalProjection = _camera.projectionMatrix;
             ResetProjection();
-            if (convergenceMode == FocusMode.Once) Converge();
+            if (convergenceMode == ConvergeMode.Once) Converge();
         }
         Matrix4x4 originalProjection;
         [SerializeField, Header("屏幕")]
         private VisualScreen targetScreen;
-        [SerializeField] FocusMode convergenceMode;
+        [SerializeField] ConvergeMode convergenceMode;
         float left, right, bottom, top, nearClip, farClip;
 
-        void OnValidate()
+        void OnPreRender()
         {
-            if (targetScreen.ScreenSize <= 0)
-            {
-                targetScreen.ScreenSize = 24;
-            }
-            if (targetScreen.ScaleFactor <= 0)
-            {
-                targetScreen.ScaleFactor = 1;
-            }
-            if (targetScreen.Ratio.x <= 0 || targetScreen.Ratio.y <= 0)
-            {
-                targetScreen.Ratio = new Vector2Int(16, 9);
-            }
-            targetScreen.CalculateRect();
+            
         }
 
         void Update()
         {
-            if (convergenceMode == FocusMode.Always) Converge();
+            if (convergenceMode == ConvergeMode.Always) Converge();
         }
 
         void OnDrawGizmos()
         {
-            targetScreen.DrawGizmos();
+            targetScreen?.DrawGizmos();
         }
 
         /// <summary>
@@ -100,11 +88,6 @@ namespace Kmax
             Vector3 ts = (targetScreen.LeftTop + targetScreen.RightTop) / 2f;
             Debug.DrawLine(ls, rs, Color.green);
             Debug.DrawLine(bs, ts, Color.green);
-            //Debug.DrawLine(ls, _cam.transform.position, Color.gray);
-            //Debug.DrawLine(rs, _cam.transform.position, Color.gray);
-            //Debug.DrawLine(bs, _cam.transform.position, Color.gray);
-            //Debug.DrawLine(ts, _cam.transform.position, Color.gray);
-            // Debug.Log($"world:{ls},{rs},{bs},{ts};");
             ls -= _cam.transform.position;
             rs -= _cam.transform.position;
             bs -= _cam.transform.position;

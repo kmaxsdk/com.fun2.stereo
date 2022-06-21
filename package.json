@@ -1,7 +1,10 @@
 {
-  "name": "com.fun2.sequential",
+  "name": "com.fun2.stereo",
   "version": "0.1.0",
-  "displayName": "Frame Sequential",
+  "displayName": "Stereo Display Pro",
   "description": "\u5e27\u5e8f\u5217\u6a21\u5f0f\u7684\u7acb\u4f53\u663e\u793a",
-  "unity": "2019.4"
+  "unity": "2019.4",
+  "author": {
+    "name": "harry"
+  }
 }
