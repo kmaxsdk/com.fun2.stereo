@@ -9,6 +9,8 @@ namespace Fun2
     public class StereoPro : MonoBehaviour
     {
         Camera _camera;
+        public Camera CenterCamera { get => _camera != null ? _camera : GetComponent<Camera>(); }
+        
         [Header("相机")]
         [SerializeField] Transform leftEye;
         [SerializeField] Transform rightEye;
@@ -16,8 +18,8 @@ namespace Fun2
         void Start()
         {
             _camera = GetComponent<Camera>();
-            _camera.stereoTargetEye = StereoTargetEyeMask.Both;
-            originalProjection = _camera.projectionMatrix;
+            CenterCamera.stereoTargetEye = StereoTargetEyeMask.Both;
+            originalProjection = CenterCamera.projectionMatrix;
             ResetProjection();
             if (convergenceMode == ConvergeMode.Once) Converge();
         }
@@ -27,10 +29,6 @@ namespace Fun2
         [SerializeField] ConvergeMode convergenceMode;
         float left, right, bottom, top, nearClip, farClip;
 
-        void OnPreRender()
-        {
-            
-        }
 
         void Update()
         {
@@ -47,9 +45,9 @@ namespace Fun2
         /// </summary>
         public void Converge()
         {
-            SetFrustum(transform, _camera.stereoTargetEye);
-            SetFrustum(leftEye, StereoTargetEyeMask.Left);
-            SetFrustum(rightEye, StereoTargetEyeMask.Right);
+            SetFrustum(CenterCamera.stereoTargetEye);
+            SetFrustum(StereoTargetEyeMask.Left);
+            SetFrustum(StereoTargetEyeMask.Right);
         }
 
         /// <summary>
@@ -57,29 +55,43 @@ namespace Fun2
         /// </summary>
         public void ResetProjection()
         {
-            _camera.projectionMatrix = originalProjection;
+            CenterCamera.projectionMatrix = originalProjection;
         }
 
-        public void SetFrustum(Transform _cam, StereoTargetEyeMask eyeMask)
+        public void SetFrustum(StereoTargetEyeMask eyeMask)
         {
+            Transform _cam = transform;
             switch (eyeMask)
             {
                 case StereoTargetEyeMask.Both:
-                    _camera.projectionMatrix = TrackScreen(_cam);
+                    CenterCamera.projectionMatrix = TrackScreen(_cam);
                     break;
                 case StereoTargetEyeMask.Left:
-                    _camera.SetStereoViewMatrix(Camera.StereoscopicEye.Left, _cam.worldToLocalMatrix);
-                    _camera.SetStereoProjectionMatrix(Camera.StereoscopicEye.Left, TrackScreen(_cam));
+                    _cam = leftEye;
+                    CenterCamera.SetStereoViewMatrix(Camera.StereoscopicEye.Left, _cam.worldToLocalMatrix);
+                    CenterCamera.SetStereoProjectionMatrix(Camera.StereoscopicEye.Left, TrackScreen(_cam));
                     break;
                 case StereoTargetEyeMask.Right:
-                    _camera.SetStereoViewMatrix(Camera.StereoscopicEye.Right, _cam.worldToLocalMatrix);
-                    _camera.SetStereoProjectionMatrix(Camera.StereoscopicEye.Right, TrackScreen(_cam));
+                    _cam = rightEye;
+                    CenterCamera.SetStereoViewMatrix(Camera.StereoscopicEye.Right, _cam.worldToLocalMatrix);
+                    CenterCamera.SetStereoProjectionMatrix(Camera.StereoscopicEye.Right, TrackScreen(_cam));
                     break;
                 default: break;
             }
         }
 
-        Matrix4x4 TrackScreen(Transform _cam)
+        public Matrix4x4 GetFrustum(StereoTargetEyeMask eye)
+        {
+            switch (eye)
+            {
+                case StereoTargetEyeMask.Left: return TrackScreen(leftEye);
+                case StereoTargetEyeMask.Right: return TrackScreen(rightEye);
+                case StereoTargetEyeMask.Both:
+                default: return TrackScreen(transform);
+            }
+        }
+
+        internal Matrix4x4 TrackScreen(Transform _cam)
         {
             if (targetScreen == null) return originalProjection;
             Vector3 ls = (targetScreen.LeftTop + targetScreen.LeftBottom) / 2f;
@@ -94,8 +106,8 @@ namespace Fun2
             ts -= _cam.transform.position;
             // Debug.Log($"local:{ls},{rs},{bs},{ts};");
             // _cam.transform.LookAt(targetScreen);
-            nearClip = _camera.nearClipPlane;
-            farClip = _camera.farClipPlane;
+            nearClip = CenterCamera.nearClipPlane;
+            farClip = CenterCamera.farClipPlane;
             float near_m(Vector3 point2cam, Vector3 dir) // 近截面取模
             {
                 float fm = Vector3.Dot(point2cam, dir);
@@ -112,7 +124,7 @@ namespace Fun2
         {
             return string.Format("original:\n{0}now:\n{1}",
                 originalProjection.ToString("F3"),
-                _camera.projectionMatrix.ToString("F3"));
+                CenterCamera.projectionMatrix.ToString("F3"));
         }
     }
 
